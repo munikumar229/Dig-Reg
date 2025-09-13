@@ -10,7 +10,9 @@ def process_data():
     """
     output_dir = os.path.join(os.path.dirname(__file__), '../data/processed')
     digits = load_digits(as_frame=True)
-    X = digits.data
+
+    # Flatten 8x8 image columns to pixel_0, pixel_1, ..., pixel_63
+    X = digits.data.copy()
     y = digits.target
 
     # First split into train+val and test
