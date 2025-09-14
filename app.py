@@ -23,7 +23,8 @@ st.set_page_config(
 
 # --- Load latest model ---
 def load_latest_model():
-	mlflow.set_tracking_uri("http://localhost:5000")
+	# mlflow.set_tracking_uri("http://localhost:5000")
+	# mlflow.set_tracking_uri("sqlite:///mlflow.db")
 	experiment = mlflow.get_experiment_by_name("RandomForest-Digits")
 	if experiment is None:
 		st.error("MLflow experiment 'RandomForest-Digits' not found.")
@@ -77,7 +78,7 @@ st.markdown(
 	unsafe_allow_html=True
 )
 
-st.title("🖌️ <span style='color:#235390'>Digits Classification App</span>", unsafe_allow_html=True)
+st.title("🖌️ <span style='color:#235390'>Digits Classification App</span>")
 st.markdown(
 	"<p style='font-size:1.2em; color:#444;'>Draw a digit (0–9) below and let the model predict it!</p>",
 	unsafe_allow_html=True
@@ -141,7 +142,7 @@ if predict_btn:
 		# Predict digit
 		prediction = model.predict(input_df)
 
-		st.success(f"🎯 <span style='font-size:1.3em;'>Predicted Digit: <span style='color:#4f8bf9'>{int(prediction[0])}</span></span>", icon="🎯", unsafe_allow_html=True)
+		st.success(f"🎯 <span style='font-size:1.3em;'>Predicted Digit: <span style='color:#4f8bf9'>{int(prediction[0])}</span></span>", icon="🎯")
 
 		# Show processed image
 		st.image(img_resized, caption="Processed 8x8 Input", width=150)

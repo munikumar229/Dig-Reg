@@ -74,7 +74,7 @@ class DigitsFeatures(BaseModel):
 
 # --- Load latest MLflow model ---
 def load_latest_model():
-    mlflow.set_tracking_uri("http://localhost:5000")
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
 
     experiment = mlflow.get_experiment_by_name("RandomForest-Digits")
     if experiment is None:
