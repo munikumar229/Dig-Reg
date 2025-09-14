@@ -1,0 +1,22 @@
+artifact_path: /home/hp/Desktop/Projects/MLops-End-to-End-pipeline-for-Crop-Yield-Estiamtion/mlruns/1/models/m-093dcdcd34ab437b970a880d1f2b9e8c/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.3
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.2
+mlflow_version: 3.3.2
+model_id: m-093dcdcd34ab437b970a880d1f2b9e8c
+model_size_bytes: 4048746
+model_uuid: m-093dcdcd34ab437b970a880d1f2b9e8c
+prompts: null
+run_id: 2aa0ba371eda45e5b9ef866ed38ee44f
+utc_time_created: '2025-09-14 08:42:28.423750'

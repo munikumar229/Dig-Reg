@@ -81,7 +81,7 @@ if predict_btn:
 		input_data = img_scaled.flatten().reshape(1, -1)
 
 	# Match training column names
-		feature_names = [f"pixel_{i}" for i in range(64)]
+		feature_names = [f"pixel_{i}_{j}" for i in range(8) for j in range(8)]
 		input_df = pd.DataFrame(input_data, columns=feature_names)
 
 		# Predict digit

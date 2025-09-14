@@ -25,8 +25,8 @@ def train_model(use_dagshub=False):
         )
         print("Tracking MLflow on DagsHub...")
     else:
-        mlflow.set_tracking_uri("http://localhost:5000")  # MLflow server
-        # mlflow.set_tracking_uri("sqlite:///mlflow.db")  # local sqlite fallback
+        # mlflow.set_tracking_uri("http://localhost:5000")  # MLflow server
+        mlflow.set_tracking_uri("sqlite:///mlflow.db")  # local sqlite fallback
         print("Tracking MLflow locally...")
 
     mlflow.set_experiment("RandomForest-Digits")
