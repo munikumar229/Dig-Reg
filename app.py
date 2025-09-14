@@ -2,9 +2,23 @@ import streamlit as st
 import pandas as pd
 import mlflow
 import numpy as np
+# If you see "Import 'streamlit_drawable_canvas' could not be resolved", install it with:
+#   pip install streamlit-drawable-canvas
 from streamlit_drawable_canvas import st_canvas
 from sklearn.preprocessing import MinMaxScaler
 import cv2
+
+st.set_page_config(
+	page_title="Digits Classification App",
+	page_icon="🖌️",
+	layout="centered",
+	initial_sidebar_state="auto",
+	menu_items={
+		'Get Help': 'https://docs.streamlit.io/',
+		'Report a bug': 'https://github.com/streamlit/streamlit/issues',
+		'About': "A beautiful ML digits classifier demo."
+	}
+)
 
 
 # --- Load latest model ---
@@ -31,32 +45,72 @@ def load_latest_model():
 # Load the trained MLflow model
 model = load_latest_model()
 
-# --- Streamlit UI ---
-st.title("🖌️ Digits Classification App")
-st.write("Draw a digit (0–9) below and let the model predict it!")
+# --- Custom CSS for better look ---
+st.markdown(
+	"""
+	<style>
+	.main {
+		background-color: #f7f7fa;
+	}
+	.stButton > button {
+		color: white;
+		background: linear-gradient(90deg, #4f8bf9 0%, #235390 100%);
+		border-radius: 8px;
+		font-size: 1.1em;
+		padding: 0.5em 1.5em;
+		margin: 0.2em 0.5em;
+	}
+	.stButton > button:hover {
+		background: linear-gradient(90deg, #235390 0%, #4f8bf9 100%);
+	}
+	.st-cb {
+		background: #fff;
+		border-radius: 12px;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+		padding: 1.5em 2em;
+	}
+	.stAlert {
+		border-radius: 8px;
+	}
+	</style>
+	""",
+	unsafe_allow_html=True
+)
+
+st.title("🖌️ <span style='color:#235390'>Digits Classification App</span>", unsafe_allow_html=True)
+st.markdown(
+	"<p style='font-size:1.2em; color:#444;'>Draw a digit (0–9) below and let the model predict it!</p>",
+	unsafe_allow_html=True
+)
 
 # --- Session state for clearing ---
 if "clear" not in st.session_state:
 	st.session_state.clear = False
 
-# --- Drawing canvas ---
-canvas_result = st_canvas(
-	fill_color="white",
-	stroke_width=10,
-	stroke_color="black",
-	background_color="white",
-	height=256,
-	width=256,
-	drawing_mode="freedraw",
-	key="canvas",
-	update_streamlit=True,
-)
+st.markdown("---")
 
-col1, col2 = st.columns(2)
+# --- Drawing canvas in a card ---
+with st.container():
+	st.markdown("<h4 style='color:#4f8bf9;'>Draw Here:</h4>", unsafe_allow_html=True)
+	canvas_result = st_canvas(
+		fill_color="white",
+		stroke_width=12,
+		stroke_color="#222",
+		background_color="white",
+		height=256,
+		width=256,
+		drawing_mode="freedraw",
+		key="canvas",
+		update_streamlit=True,
+	)
+
+st.markdown("---")
+
+col1, col2 = st.columns([1, 1])
 with col1:
-	predict_btn = st.button("✅ Predict Digit")
+	predict_btn = st.button("✅ Predict Digit", use_container_width=True)
 with col2:
-	clear_btn = st.button("🧹 Clear Drawing")
+	clear_btn = st.button("🧹 Clear Drawing", use_container_width=True)
 
 # --- Clear the canvas ---
 if clear_btn:
@@ -86,8 +140,8 @@ if predict_btn:
 
 		# Predict digit
 		prediction = model.predict(input_df)
-		
-		st.success(f"🎯 Predicted Digit: {int(prediction[0])}")
+
+		st.success(f"🎯 <span style='font-size:1.3em;'>Predicted Digit: <span style='color:#4f8bf9'>{int(prediction[0])}</span></span>", icon="🎯", unsafe_allow_html=True)
 
 		# Show processed image
 		st.image(img_resized, caption="Processed 8x8 Input", width=150)
