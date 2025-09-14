@@ -77,15 +77,18 @@ st.markdown(
 	unsafe_allow_html=True
 )
 
-st.title("🖌️ <span style='color:#235390'>Digits Classification App</span>", unsafe_allow_html=True)
 st.markdown(
-	"<p style='font-size:1.2em; color:#444;'>Draw a digit (0–9) below and let the model predict it!</p>",
+	"""
+	<h1>🖌️ <span style='color:#235390'>Digits Classification App</span></h1>
+	<p style='font-size:1.2em; color:#444;'>Draw a digit (0–9) below and let the model predict it!</p>
+	""",
 	unsafe_allow_html=True
 )
 
-# --- Session state for clearing ---
-if "clear" not in st.session_state:
-	st.session_state.clear = False
+
+# --- Session state for clearing and canvas key ---
+if "canvas_key" not in st.session_state:
+	st.session_state.canvas_key = 0
 
 st.markdown("---")
 
@@ -100,7 +103,7 @@ with st.container():
 		height=256,
 		width=256,
 		drawing_mode="freedraw",
-		key="canvas",
+		key=f"canvas_{st.session_state.canvas_key}",
 		update_streamlit=True,
 	)
 
@@ -114,7 +117,8 @@ with col2:
 
 # --- Clear the canvas ---
 if clear_btn:
-	st.experimental_rerun()
+	st.session_state.canvas_key += 1
+	st.rerun()
 
 # --- Prediction logic ---
 if predict_btn:
@@ -141,7 +145,7 @@ if predict_btn:
 		# Predict digit
 		prediction = model.predict(input_df)
 
-		st.success(f"🎯 <span style='font-size:1.3em;'>Predicted Digit: <span style='color:#4f8bf9'>{int(prediction[0])}</span></span>", icon="🎯", unsafe_allow_html=True)
+		st.markdown(f"🎯 <span style='font-size:1.3em;'>Predicted Digit: <span style='color:#4f8bf9'>{int(prediction[0])}</span></span>", unsafe_allow_html=True)
 
 		# Show processed image
 		st.image(img_resized, caption="Processed 8x8 Input", width=150)
