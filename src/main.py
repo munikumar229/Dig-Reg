@@ -97,7 +97,7 @@ class DigitsFeatures(BaseModel):
 def load_latest_model():
     
 # Point to the MLflow tracking server, same as in train.py
-    mlflow.set_tracking_uri("http://127.0.0.1:5000")
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
     
     # Search for runs in the default experiment (experiment_id='0')
     runs = mlflow.search_runs(experiment_ids=['0'])
