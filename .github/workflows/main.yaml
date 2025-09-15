@@ -52,5 +52,5 @@ jobs:
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/mlops-digits:latest
 
-    # - name: Verify Docker Image
-    #   run: docker run ${{ secrets.DOCKER_USERNAME }}/mlops-digits:latest
+    - name: Verify Docker Image
+      run: docker run ${{ secrets.DOCKER_USERNAME }}/mlops-digits:latest
