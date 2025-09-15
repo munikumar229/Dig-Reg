@@ -53,4 +53,4 @@ jobs:
         tags: ${{ secrets.DOCKER_USERNAME }}/mlops-digits:latest
 
     - name: Verify Docker Image
-      run: docker run --rm ${{ secrets.DOCKER_USERNAME }}/mlops-digits:latest python --version  
+      run: docker run --rm ${{ secrets.DOCKER_USERNAME }}/mlops-digits:latest  
