@@ -97,7 +97,7 @@ class DigitsFeatures(BaseModel):
 def load_latest_model():
     
 # Point to the MLflow tracking server, same as in train.py
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
+    mlflow.set_tracking_uri("http://127.0.0.1:5000")
 
     # experiment = mlflow.get_experiment_by_name("RandomForest-Digits")
     # if experiment is None:

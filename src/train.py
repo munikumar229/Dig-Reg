@@ -9,7 +9,7 @@ from sklearn.model_selection import GridSearchCV
 import joblib
 import dagshub
 
-def train_model(use_dagshub=False):
+def train_model():
     """
     Train RandomForest model for digit classification
     and log parameters, metrics, and model to MLflow.
@@ -18,17 +18,10 @@ def train_model(use_dagshub=False):
     # -------------------------------
     # 1. Set Tracking Backend
     # -------------------------------
-    if use_dagshub:
-        dagshub.init(
-            repo_owner="munikumar229",
-            repo_name="MLops-End-to-End-pipeline-for-Crop-Yield-Estiamtion",
-            mlflow=True
-        )
-        print("Tracking MLflow on DagsHub...")
-    else:
-        # mlflow.set_tracking_uri("http://localhost:5000")  # MLflow server
-        mlflow.set_tracking_uri("sqlite:///mlflow.db")  # local sqlite fallback
-        print("Tracking MLflow locally...")
+    
+    # mlflow.set_tracking_uri("http://localhost:5000")  # MLflow server
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")  # local sqlite fallback
+    print("Tracking MLflow locally...")
 
     # mlflow.set_experiment("RandomForest-Digits")
 
@@ -103,4 +96,4 @@ def train_model(use_dagshub=False):
     # print("Best model saved to models/best_random_forest.pkl")
 
 if __name__ == "__main__":
-    train_model(use_dagshub=False)
+    train_model()

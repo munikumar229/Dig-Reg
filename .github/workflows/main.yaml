@@ -32,7 +32,7 @@ jobs:
       run: python src/train.py
 
   docker-build:
-    needs: predict   # 👈 ensures this runs only after `predict` job finishes successfully
+    needs: predict   
     runs-on: ubuntu-latest
 
     steps:
