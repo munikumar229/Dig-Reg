@@ -103,7 +103,7 @@ def load_latest_model():
     runs = mlflow.search_runs(experiment_ids=['0'])
     
     # Get the latest run's ID
-    latest_run_id = runs.iloc[1]['run_id']
+    latest_run_id = runs.iloc[0]['run_id']
     
     # Construct the model URI
     model_uri = f"runs:/{latest_run_id}/random-forest-best-model"
