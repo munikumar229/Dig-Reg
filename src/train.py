@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import mlflow
 import mlflow.sklearn
+from mlflow.tracking import MlflowClient
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 from sklearn.model_selection import GridSearchCV
@@ -79,7 +80,14 @@ def train_model(use_dagshub=False):
         mlflow.log_metric("f1_score", f1)
 
         # log model with correct artifact path
-        mlflow.sklearn.log_model(best_rf, "random-forest-best-model")
+        mlflow.sklearn.log_model(best_rf, "random-forest-best-model", registered_model_name="DigitsClassifier")
+        client = MlflowClient()
+        latest_version = client.get_latest_versions("DigitsClassifier")[0].version
+        client.transition_model_version_stage(
+            name="DigitsClassifier",
+            version=latest_version,
+            stage="Production"
+        )
 
         # Save classification report as artifact
         report_path = "classification_report.txt"

@@ -3,7 +3,7 @@ import mlflow
 import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel
-
+from mlflow.tracking import MlflowClient
 # --- Define the request schema ---
 class DigitsFeatures(BaseModel):
     pixel_0_0: float
@@ -76,24 +76,30 @@ class DigitsFeatures(BaseModel):
 def load_latest_model():
     mlflow.set_tracking_uri("sqlite:///mlflow.db")
 
-    experiment = mlflow.get_experiment_by_name("RandomForest-Digits")
-    if experiment is None:
-        raise RuntimeError("Experiment not found. Make sure you trained and logged a model first.")
+    # experiment = mlflow.get_experiment_by_name("RandomForest-Digits")
+    # if experiment is None:
+    #     raise RuntimeError("Experiment not found. Make sure you trained and logged a model first.")
 
-    runs = mlflow.search_runs(
-        experiment_ids=[experiment.experiment_id],
-        order_by=["attributes.start_time DESC"]
-    )
-    if runs.empty:
-        raise RuntimeError("No runs found in experiment.")
+    # runs = mlflow.search_runs(
+    #     experiment_ids=[experiment.experiment_id],
+    #     order_by=["attributes.start_time DESC"]
+    # )
+    # if runs.empty:
+    #     raise RuntimeError("No runs found in experiment.")
 
-    latest_run_id = runs.iloc[0]["run_id"]
+    # latest_run_id = runs.iloc[0]["run_id"]
 
-    # ✅ use the correct artifact path from train.py
-    model_uri = f"runs:/{latest_run_id}/random-forest-best-model"
+    # # ✅ use the correct artifact path from train.py
+    # model_uri = f"runs:/{latest_run_id}/random-forest-best-model"
+    client = MlflowClient()
+    latest = client.get_latest_versions("DigitsClassifier", stages=["Production"])
+    model_uri = f"models:/DigitsClassifier/{latest[0].version}"
+    model = mlflow.sklearn.load_model(model_uri)
+
+
     print(f"Loading model from: {model_uri}")
 
-    return mlflow.sklearn.load_model(model_uri)
+    return model
 
 
 # Load once at startup
