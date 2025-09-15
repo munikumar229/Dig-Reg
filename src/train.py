@@ -29,7 +29,7 @@ def train_model(use_dagshub=False):
         mlflow.set_tracking_uri("sqlite:///mlflow.db")  # local sqlite fallback
         print("Tracking MLflow locally...")
 
-    mlflow.set_experiment("RandomForest-Digits")
+    # mlflow.set_experiment("RandomForest-Digits")
 
     # -------------------------------
     # 2. Load Data
@@ -87,12 +87,12 @@ def train_model(use_dagshub=False):
             f.write(classification_report(y_val, predictions))
         mlflow.log_artifact(report_path)
 
-    # -------------------------------
-    # 4. Save best model locally
-    # -------------------------------
-    os.makedirs("models", exist_ok=True)
-    joblib.dump(best_rf, os.path.join("models", "best_random_forest.pkl"))
-    print("Best model saved to models/best_random_forest.pkl")
+    # # -------------------------------
+    # # 4. Save best model locally
+    # # -------------------------------
+    # os.makedirs("models", exist_ok=True)
+    # joblib.dump(best_rf, os.path.join("models", "best_random_forest.pkl"))
+    # print("Best model saved to models/best_random_forest.pkl")
 
 if __name__ == "__main__":
     train_model(use_dagshub=False)

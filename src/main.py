@@ -73,28 +73,43 @@ class DigitsFeatures(BaseModel):
 
 
 # --- Load latest MLflow model ---
+# def load_latest_model():
+#     mlflow.set_tracking_uri("sqlite:///mlflow.db")
+
+#     experiment = mlflow.get_experiment_by_name("RandomForest-Digits")
+#     if experiment is None:
+#         raise RuntimeError("Experiment not found. Make sure you trained and logged a model first.")
+
+#     runs = mlflow.search_runs(
+#         experiment_ids=[experiment.experiment_id],
+#         order_by=["attributes.start_time DESC"]
+#     )
+#     if runs.empty:
+#         raise RuntimeError("No runs found in experiment.")
+
+#     latest_run_id = runs.iloc[0]["run_id"]
+
+#     # ✅ use the correct artifact path from train.py
+#     model_uri = f"runs:/{latest_run_id}/random-forest-best-model"
+#     print(f"Loading model from: {model_uri}")
+
+#     return mlflow.sklearn.load_model(model_uri)
 def load_latest_model():
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
-
-    experiment = mlflow.get_experiment_by_name("RandomForest-Digits")
-    if experiment is None:
-        raise RuntimeError("Experiment not found. Make sure you trained and logged a model first.")
-
-    runs = mlflow.search_runs(
-        experiment_ids=[experiment.experiment_id],
-        order_by=["attributes.start_time DESC"]
-    )
-    if runs.empty:
-        raise RuntimeError("No runs found in experiment.")
-
-    latest_run_id = runs.iloc[0]["run_id"]
-
-    # ✅ use the correct artifact path from train.py
+    
+# Point to the MLflow tracking server, same as in train.py
+    mlflow.set_tracking_uri("http://127.0.0.1:5000")
+    
+    # Search for runs in the default experiment (experiment_id='0')
+    runs = mlflow.search_runs(experiment_ids=['0'])
+    
+    # Get the latest run's ID
+    latest_run_id = runs.iloc[0]['run_id']
+    
+    # Construct the model URI
     model_uri = f"runs:/{latest_run_id}/random-forest-best-model"
+    
     print(f"Loading model from: {model_uri}")
-
     return mlflow.sklearn.load_model(model_uri)
-
 
 # Load once at startup
 model = load_latest_model()
