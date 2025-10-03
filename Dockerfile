@@ -1,15 +1,24 @@
-# Start from the official Python slim image
+# Start from Python slim image
 FROM python:3.12.3-slim
-# Set the working directory in the container
+
+# Set working directory
 WORKDIR /app
-# Copy the current directory contents into the container at /app
+
+# Copy all files
 COPY . .
 
-# Install any needed packages specified in requirements.txt
+# Install system dependencies for OpenCV
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libgl1-mesa-glx \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip and install Python dependencies
+RUN python -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 8502 available to the world outside this container
-EXPOSE 8502
-# Run app.py when the container launches
-CMD ["uvicorn", "src.main:app", "--host=0.0.0.0", "--port=8502"]
+# Expose Streamlit port
+EXPOSE 8501
 
+# Run Streamlit app
+CMD ["streamlit", "run", "src/app.py", "--server.port=8501", "--server.address=0.0.0.0"]

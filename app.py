@@ -1,156 +1,99 @@
 import streamlit as st
 import pandas as pd
-import mlflow
 import numpy as np
-# If you see "Import 'streamlit_drawable_canvas' could not be resolved", install it with:
-#   pip install streamlit-drawable-canvas
+import cv2
 from streamlit_drawable_canvas import st_canvas
 from sklearn.preprocessing import MinMaxScaler
-import cv2
+import mlflow
 
-st.set_page_config(
-	page_title="Digits Classification App",
-	page_icon="🖌️",
-	layout="centered",
-	initial_sidebar_state="auto",
-	menu_items={
-		'Get Help': 'https://docs.streamlit.io/',
-		'Report a bug': 'https://github.com/streamlit/streamlit/issues',
-		'About': "A beautiful ML digits classifier demo."
-	}
-)
+st.set_page_config(page_title="Digits Classifier", page_icon="🖌️")
 
-
-# --- Load latest model ---
+# --- Load model (modern MLflow) ---
 def load_latest_model():
-	# mlflow.set_tracking_uri("http://localhost:5000")
-	mlflow.set_tracking_uri("sqlite:///mlflow.db")
-	experiment = mlflow.get_experiment_by_name("RandomForest-Digits")
-	if experiment is None:
-		st.error("MLflow experiment 'RandomForest-Digits' not found.")
-		st.stop()
+    """
+    Load the latest trained model from MLflow.
+    Tries Production model first, else fallback to latest run artifact.
+    """
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")  # or your MLflow server
 
-	runs = mlflow.search_runs(
-		experiment_ids=[experiment.experiment_id],
-		order_by=["start_time DESC"]
-	)
-	if runs.empty:
-		st.error("No runs found in MLflow experiment.")
-		st.stop()
+    # Try to load Production model
+    try:
+        model_name = "DigitsClassifier"
+        model_uri = f"models:/{model_name}/Production"
+        model = mlflow.sklearn.load_model(model_uri)
+        st.info(f"Loaded Production model: {model_uri}")
+        return model
+    except Exception as e:
+        st.warning(f"Production model not found. Loading latest run artifact.\nReason: {e}")
+        experiment = mlflow.get_experiment_by_name("RandomForest-Digits")
+        if experiment is None:
+            st.error("No experiment found with name 'RandomForest-Digits'")
+            st.stop()
 
-	latest_run_id = runs.iloc[0]['run_id']
-	model_uri = f"runs:/{latest_run_id}/random-forest-best-model"
-	return mlflow.sklearn.load_model(model_uri)
+        runs = mlflow.search_runs([experiment.experiment_id], order_by=["start_time DESC"])
+        if runs.empty:
+            st.error("No runs found in the experiment")
+            st.stop()
 
+        latest_run_id = runs.iloc[0]['run_id']
+        model_uri = f"runs:/{latest_run_id}/random-forest-best-model"
+        st.info(f"Loading latest run model: {model_uri}")
+        return mlflow.sklearn.load_model(model_uri)
 
-# Load the trained MLflow model
+# Load once at startup
 model = load_latest_model()
 
-# --- Custom CSS for better look ---
-st.markdown(
-	"""
-	<style>
-	.main {
-		background-color: #f7f7fa;
-	}
-	.stButton > button {
-		color: white;
-		background: linear-gradient(90deg, #4f8bf9 0%, #235390 100%);
-		border-radius: 8px;
-		font-size: 1.1em;
-		padding: 0.5em 1.5em;
-		margin: 0.2em 0.5em;
-	}
-	.stButton > button:hover {
-		background: linear-gradient(90deg, #235390 0%, #4f8bf9 100%);
-	}
-	.st-cb {
-		background: #fff;
-		border-radius: 12px;
-		box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-		padding: 1.5em 2em;
-	}
-	.stAlert {
-		border-radius: 8px;
-	}
-	</style>
-	""",
-	unsafe_allow_html=True
-)
+st.title("🖌️ Digits Classification App")
+st.write("Draw a digit (0–9) and click Predict!")
 
-
-st.markdown(
-	"""
-	<h1>🖌️ <span style='color:#235390'>Digits Classification App</span></h1>
-	<p style='font-size:1.2em; color:#444;'>Draw a digit (0–9) below and let the model predict it!</p>
-	""",
-	unsafe_allow_html=True
-)
-
-
-# --- Session state for clearing and canvas key ---
+# --- Session state for clearing canvas ---
 if "canvas_key" not in st.session_state:
-	st.session_state.canvas_key = 0
+    st.session_state.canvas_key = 0
 
-st.markdown("---")
+# --- Drawing canvas ---
+canvas_result = st_canvas(
+    fill_color="white",
+    stroke_width=12,
+    stroke_color="#222",
+    background_color="white",
+    height=256,
+    width=256,
+    drawing_mode="freedraw",
+    key=f"canvas_{st.session_state.canvas_key}",
+    update_streamlit=True,
+)
 
-# --- Drawing canvas in a card ---
-with st.container():
-	st.markdown("<h4 style='color:#4f8bf9;'>Draw Here:</h4>", unsafe_allow_html=True)
-	canvas_result = st_canvas(
-		fill_color="white",
-		stroke_width=12,
-		stroke_color="#222",
-		background_color="white",
-		height=256,
-		width=256,
-		drawing_mode="freedraw",
-		key=f"canvas_{st.session_state.canvas_key}",
-		update_streamlit=True,
-	)
+# --- Buttons ---
+col1, col2 = st.columns([1,1])
+predict_btn = col1.button("Predict")
+clear_btn = col2.button("Clear")
 
-st.markdown("---")
-
-col1, col2 = st.columns([1, 1])
-with col1:
-	predict_btn = st.button("✅ Predict Digit", use_container_width=True)
-with col2:
-	clear_btn = st.button("🧹 Clear Drawing", use_container_width=True)
-
-# --- Clear the canvas ---
+# --- Clear canvas ---
 if clear_btn:
-	st.session_state.canvas_key += 1
-	st.rerun()
+    st.session_state.canvas_key += 1
+    st.rerun()
 
 # --- Prediction logic ---
 if predict_btn:
-	if canvas_result.image_data is not None:
-		# Convert RGBA -> Grayscale
-		img = cv2.cvtColor(canvas_result.image_data.astype("uint8"), cv2.COLOR_RGBA2GRAY)
+    if canvas_result.image_data is not None:
+        # Convert RGBA to grayscale
+        img = cv2.cvtColor(canvas_result.image_data.astype("uint8"), cv2.COLOR_RGBA2GRAY)
+        # Resize to 8x8 (like sklearn digits dataset)
+        img_resized = cv2.resize(img, (8,8), interpolation=cv2.INTER_AREA)
+        img_resized = 255 - img_resized  # invert colors
 
-		# Resize to 8x8 (like sklearn digits dataset)
-		img_resized = cv2.resize(img, (8, 8), interpolation=cv2.INTER_AREA)
+        # Scale pixels to 0–16
+        scaler = MinMaxScaler((0,16))
+        img_scaled = scaler.fit_transform(img_resized)
+        input_data = img_scaled.flatten().reshape(1,-1)
 
-		# Invert colors (model expects black digit on white background)
-		img_resized = 255 - img_resized
+        # Column names matching training data
+        feature_names = [f"pixel_{i}_{j}" for i in range(8) for j in range(8)]
+        input_df = pd.DataFrame(input_data, columns=feature_names)
 
-		# Scale pixel values to 0–16
-		scaler = MinMaxScaler((0, 16))
-		img_scaled = scaler.fit_transform(img_resized)
-		# Flatten into 64 features
-		input_data = img_scaled.flatten().reshape(1, -1)
-
-	# Match training column names
-		feature_names = [f"pixel_{i}_{j}" for i in range(8) for j in range(8)]
-		input_df = pd.DataFrame(input_data, columns=feature_names)
-
-		# Predict digit
-		prediction = model.predict(input_df)
-
-	
-		st.markdown(f"🎯 <span style='font-size:1.3em;'>Predicted Digit: <span style='color:#4f8bf9'>{int(prediction[0])}</span></span>", unsafe_allow_html=True)
-
-		# Show processed image
-		st.image(img_resized, caption="Processed 8x8 Input", width=150)
-	else:
-		st.error("Please draw a digit before predicting.")
+        # Predict
+        prediction = model.predict(input_df)
+        st.success(f"Predicted Digit: {int(prediction[0])}")
+        st.image(img_resized, caption="Processed 8x8 Input", width=150)
+    else:
+        st.error("Please draw a digit before predicting.")

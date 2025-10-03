@@ -6,8 +6,6 @@ from mlflow.tracking import MlflowClient
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 from sklearn.model_selection import GridSearchCV
-import joblib
-import dagshub
 
 def train_model():
     """
@@ -16,23 +14,18 @@ def train_model():
     """
 
     # -------------------------------
-    # 1. Set Tracking Backend
+    # 1. Set MLflow Tracking
     # -------------------------------
-    
-    # mlflow.set_tracking_uri("http://localhost:5000")  # MLflow server
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")  # local sqlite fallback
-    print("Tracking MLflow locally...")
-
-    # mlflow.set_experiment("RandomForest-Digits")
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
+    experiment_name = "RandomForest-Digits"
+    mlflow.set_experiment(experiment_name)
+    client = MlflowClient()
 
     # -------------------------------
     # 2. Load Data
     # -------------------------------
-    train_path = os.path.join("data", "processed", "train.csv")
-    val_path = os.path.join("data", "processed", "val.csv")
-
-    train_df = pd.read_csv(train_path)
-    val_df = pd.read_csv(val_path)
+    train_df = pd.read_csv(os.path.join("data", "processed", "train.csv"))
+    val_df = pd.read_csv(os.path.join("data", "processed", "val.csv"))
 
     X_train = train_df.drop("target", axis=1)
     y_train = train_df["target"]
@@ -40,7 +33,7 @@ def train_model():
     y_val = val_df["target"]
 
     # -------------------------------
-    # 3. Training & Logging
+    # 3. Hyperparameter tuning
     # -------------------------------
     param_grid = {
         'n_estimators': [50, 100],
@@ -50,50 +43,47 @@ def train_model():
     rf = RandomForestClassifier(random_state=42)
     grid_search = GridSearchCV(rf, param_grid, cv=3, scoring='accuracy', n_jobs=-1)
 
-    with mlflow.start_run():
-        print("Starting hyperparameter tuning with GridSearchCV...")
+    with mlflow.start_run() as run:
         grid_search.fit(X_train, y_train)
-
         best_rf = grid_search.best_estimator_
         best_params = grid_search.best_params_
 
         # Evaluate
-        predictions = best_rf.predict(X_val)
-        acc = accuracy_score(y_val, predictions)
-        f1 = f1_score(y_val, predictions, average='weighted')
+        preds = best_rf.predict(X_val)
+        acc = accuracy_score(y_val, preds)
+        f1 = f1_score(y_val, preds, average='weighted')
 
         print("Best Hyperparameters:", best_params)
-        print(f"Best Accuracy: {acc}")
-        print(f"Best F1 Score: {f1}")
-        print("Classification Report:\n", classification_report(y_val, predictions))
+        print(f"Accuracy: {acc}, F1 Score: {f1}")
+        print("Classification Report:\n", classification_report(y_val, preds))
 
-        # --- Log to MLflow ---
+        # Log params, metrics, model
         mlflow.log_params(best_params)
         mlflow.log_metric("accuracy", acc)
         mlflow.log_metric("f1_score", f1)
-
-        # log model with correct artifact path
-        mlflow.sklearn.log_model(best_rf, "random-forest-best-model", registered_model_name="DigitsClassifier")
-        client = MlflowClient()
-        latest_version = client.get_latest_versions("DigitsClassifier")[0].version
-        client.transition_model_version_stage(
-            name="DigitsClassifier",
-            version=latest_version,
-            stage="Production"
-        )
+        mlflow.sklearn.log_model(best_rf, artifact_path="random-forest-best-model", registered_model_name="DigitsClassifier")
 
         # Save classification report as artifact
         report_path = "classification_report.txt"
         with open(report_path, "w") as f:
-            f.write(classification_report(y_val, predictions))
+            f.write(classification_report(y_val, preds))
         mlflow.log_artifact(report_path)
 
-    # # -------------------------------
-    # # 4. Save best model locally
-    # # -------------------------------
-    # os.makedirs("models", exist_ok=True)
-    # joblib.dump(best_rf, os.path.join("models", "best_random_forest.pkl"))
-    # print("Best model saved to models/best_random_forest.pkl")
+    # -------------------------------
+    # 4. Transition model to Production
+    # -------------------------------
+    try:
+        latest_version = client.get_latest_versions("DigitsClassifier")[0].version
+        client.transition_model_version_stage(
+            name="DigitsClassifier",
+            version=latest_version,
+            stage="Production",
+            archive_existing_versions=True
+        )
+        print(f"Model version {latest_version} transitioned to Production.")
+    except Exception as e:
+        print(f"Could not transition to Production: {e}")
+
 
 if __name__ == "__main__":
     train_model()
