@@ -214,6 +214,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## **Contact**
 
-**Author:** Muni Kumar  
-**GitHub:** [@munikumar229](https://github.com/munikumar229)  
+**Author:** Muni Kumar  and Abhiroop
+**GitHub:** [@munikumar229](https://github.com/munikumar229)   and [@shadowscythe03](https://github.com/shadowscythe03)
 **Project Link:** [https://github.com/munikumar229/Dig-Reg](https://github.com/munikumar229/Dig-Reg)
