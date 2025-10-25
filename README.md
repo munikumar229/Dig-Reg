@@ -26,8 +26,10 @@ Key technologies include:
 ## **Features**
 
 - 🎨 Draw digits on a canvas in the web interface
-- 🔮 Real-time prediction with a trained model
+- 🤖 **Multiple ML Models**: Choose between RandomForest and MLP (Neural Network) models
+- 🔮 Real-time prediction with model comparison capabilities
 - 📊 MLflow experiment tracking: metrics, parameters, artifacts, and model registry
+- 📈 Interactive prediction probabilities and performance metrics
 - 🔌 API endpoint to integrate with other applications
 - 🐳 Dockerized deployment for easy scaling and portability
 - 🚀 Automated CI/CD pipeline for preprocessing, training, Docker build, and deployment
@@ -92,9 +94,16 @@ pip install -r requirements.txt
 python src/process_data.py
 ```
 
-2. **Train the model and log to MLflow:**
+2. **Train models and log to MLflow:**
 ```bash
-python src/train.py
+# Train RandomForest model
+python src/train.py --model randomforest
+
+# Train MLP (Neural Network) model
+python src/train.py --model mlp
+
+# Or train both models at once
+./train_all_models.sh
 ```
 
 3. **Run FastAPI backend:**
