@@ -34,7 +34,36 @@ Key technologies include:
 - 📈 Interactive prediction probabilities and performance metrics
 - 🔌 API endpoint to integrate with other applications
 - 🐳 Dockerized deployment for easy scaling and portability
-- � Automated CI/CD pipeline for preprocessing, training, Docker build, and deployment
+- 🚀 Automated CI/CD pipeline for preprocessing, training, Docker build, and deployment
+
+---
+
+## 🚀 **Quick Start (30 seconds)**
+
+**Prerequisites**: Docker installed ([Get Docker](https://docs.docker.com/get-docker/))
+
+### **🐧 Linux / macOS / WSL2:**
+```bash
+# One command to deploy everything
+curl -sSL https://raw.githubusercontent.com/munikumar229/Dig-Reg/main/deployment/deploy.sh | bash
+```
+
+### **🪟 Windows (PowerShell):**
+```powershell
+# Download and run Windows deployment script
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/munikumar229/Dig-Reg/main/deployment/deploy-windows.ps1" -OutFile "deploy.ps1"
+.\deploy.ps1
+```
+
+### **🌐 Any Platform (Manual):**
+```bash
+curl -o docker-compose.yml https://raw.githubusercontent.com/munikumar229/Dig-Reg/main/deployment/docker-compose.production.yml
+docker-compose up -d
+```
+
+**Then open**: http://localhost:8501 - Draw a digit and watch AI predict it! 🎨
+
+> **📦 Downloads**: 2 Docker images (~1.4GB) | **🕐 Time**: 3-5 minutes
 
 ---
 
@@ -144,10 +173,14 @@ streamlit run frontend/app.py --server.port 8501
 
 ### **Option A: One-Click Deployment (Easiest)**
 
+**Prerequisites**: Docker installed and running
+
 ```bash
-# Download and run deployment script
+# Single command deployment - that's it!
 curl -sSL https://raw.githubusercontent.com/munikumar229/Dig-Reg/main/deployment/deploy.sh | bash
 ```
+
+**Then**: Open http://localhost:8501 in your browser! 🎨
 
 ### **Option B: Manual Deployment with Pre-built Images**
 
