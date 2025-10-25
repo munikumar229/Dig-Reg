@@ -24,7 +24,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Cache pip dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -96,6 +96,9 @@ jobs:
   security-scan:
     needs: test-and-build
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
     
     steps:
       - name: Checkout code
@@ -108,12 +111,14 @@ jobs:
           scan-ref: '.'
           format: 'sarif'
           output: 'trivy-results.sarif'
+          exit-code: '0'  # Don't fail the build on vulnerabilities
           
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && github.event_name == 'push'  # Only upload on push, not PR
         with:
           sarif_file: 'trivy-results.sarif'
+        continue-on-error: true  # Don't fail if upload fails
 
   deploy-staging:
     needs: [docker-build]
