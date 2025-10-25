@@ -1,0 +1,27 @@
+# Streamlit Frontend Dockerfile
+FROM python:3.12.3-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN python -m pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install system dependencies for OpenCV
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libgl1-mesa-glx \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy frontend application files
+COPY frontend/ ./frontend/
+COPY config/ ./config/
+# Note: We don't copy models or mlruns as frontend will call backend API
+
+# Expose Streamlit port
+EXPOSE 8501
+
+# Run Streamlit app
+CMD ["streamlit", "run", "frontend/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
