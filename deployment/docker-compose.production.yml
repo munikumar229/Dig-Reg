@@ -1,0 +1,45 @@
+# 🐳 Dig-Reg: Production Deployment with Pre-built Images
+
+version: '3.8'
+
+services:
+  # FastAPI Backend Service
+  backend:
+    image: ${DOCKER_USERNAME:-munikumar229}/dig-reg-backend:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=sqlite:///mlflow.db
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./models:/app/models
+      - ./mlflow.db:/app/mlflow.db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Streamlit Frontend Service  
+  frontend:
+    image: ${DOCKER_USERNAME:-munikumar229}/dig-reg-frontend:latest
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mlruns:
+  models:

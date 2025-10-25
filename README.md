@@ -138,21 +138,41 @@ streamlit run frontend/app.py --server.port 8501
 
 ## **Docker Deployment**
 
-### **Using Docker Compose (Recommended)**
+> **📦 Note**: This application uses **2 Docker images** that work together:
+> - `munikumar229/dig-reg-backend:latest` (FastAPI + ML models)
+> - `munikumar229/dig-reg-frontend:latest` (Streamlit UI)
 
-Build and run all services with one command:
+### **Option A: One-Click Deployment (Easiest)**
 
 ```bash
-# Navigate to deployment directory
-cd deployment
+# Download and run deployment script
+curl -sSL https://raw.githubusercontent.com/munikumar229/Dig-Reg/main/deployment/deploy.sh | bash
+```
 
-# Start all services
-sudo docker-compose up --build -d
+### **Option B: Manual Deployment with Pre-built Images**
+
+```bash
+# Download production compose file
+curl -o docker-compose.yml https://raw.githubusercontent.com/munikumar229/Dig-Reg/main/deployment/docker-compose.production.yml
+
+# Pull both images and start
+docker-compose pull
+docker-compose up -d
 
 # Access the applications
 # Frontend: http://localhost:8501
 # Backend API: http://localhost:8000
 # API Documentation: http://localhost:8000/docs
+```
+
+### **Option C: Build Locally**
+
+```bash
+# Navigate to deployment directory
+cd deployment
+
+# Build and start all services
+sudo docker-compose up --build -d
 
 # Stop services
 sudo docker-compose down
