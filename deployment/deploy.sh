@@ -44,9 +44,20 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
+# Check if Docker daemon is running
 if ! docker info &> /dev/null; then
-    print_error "Docker daemon is not running. Please start Docker first."
-    exit 1
+    if ! sudo docker info &> /dev/null; then
+        print_error "Docker daemon is not running. Please start Docker first:"
+        echo "  sudo systemctl start docker"
+        exit 1
+    else
+        print_warning "Docker requires sudo access. You may be prompted for password."
+        DOCKER_CMD="sudo docker"
+        COMPOSE_CMD_PREFIX="sudo "
+    fi
+else
+    DOCKER_CMD="docker"
+    COMPOSE_CMD_PREFIX=""
 fi
 
 print_success "Docker is installed and running"
@@ -54,9 +65,9 @@ print_success "Docker is installed and running"
 # Check if docker-compose is available
 print_step "Checking Docker Compose availability..."
 if command -v docker-compose &> /dev/null; then
-    COMPOSE_CMD="docker-compose"
-elif docker compose version &> /dev/null; then
-    COMPOSE_CMD="docker compose"
+    COMPOSE_CMD="${COMPOSE_CMD_PREFIX}docker-compose"
+elif ${DOCKER_CMD} compose version &> /dev/null; then
+    COMPOSE_CMD="${COMPOSE_CMD_PREFIX}docker compose"
 else
     print_error "Docker Compose is not available. Please install Docker Compose."
     exit 1
@@ -122,10 +133,10 @@ print_success "Docker Compose file created"
 # Pull both images
 print_step "Pulling Docker images..."
 echo "📥 Pulling backend image: $BACKEND_IMAGE"
-docker pull "$BACKEND_IMAGE"
+$DOCKER_CMD pull "$BACKEND_IMAGE"
 
 echo "📥 Pulling frontend image: $FRONTEND_IMAGE"  
-docker pull "$FRONTEND_IMAGE"
+$DOCKER_CMD pull "$FRONTEND_IMAGE"
 
 print_success "Both images pulled successfully"
 
