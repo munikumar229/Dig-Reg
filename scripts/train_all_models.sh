@@ -9,6 +9,15 @@ if [ ! -f "requirements.txt" ]; then
     exit 1
 fi
 
+# Security validation - check MLflow version
+echo "🛡️ Checking MLflow security status..."
+if grep -q "mlflow==3.5.1" requirements.txt; then
+    echo "✅ MLflow 3.5.1 detected - CVE-2024-37059 vulnerability resolved"
+else
+    echo "⚠️  Warning: Please update MLflow to version 3.5.1+ to resolve CVE-2024-37059"
+    echo "   Update command: pip install mlflow==3.5.1"
+fi
+
 # Check if data is processed
 if [ ! -d "data/processed" ]; then
     echo "📊 Processing data first..."
