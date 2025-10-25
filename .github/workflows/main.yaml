@@ -48,16 +48,8 @@ jobs:
       - name: Train MLP model  
         run: python scripts/train.py --model mlp
         
-      - name: Run model tests
-        run: python scripts/test_models.py
-        
-      - name: Test API endpoints (if tests exist)
-        run: |
-          if [ -f "tests/test_backend_api.py" ]; then
-            python tests/test_backend_api.py
-          else
-            echo "API tests not found, skipping..."
-          fi
+      - name: Run comprehensive test suite
+        run: python scripts/run_tests.py
 
   docker-build:
     needs: test-and-build
