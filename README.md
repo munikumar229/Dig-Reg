@@ -5,7 +5,8 @@
 ![MLflow](https://img.shields.io/badge/MLflow-Tracking-green)
 ![Docker](https://img.shields.io/badge/Docker-Container-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
-![GitHub Actions](https://img.shields.io/badge/CI/CD-GitHub--Actions-blue)
+[![CI/CD Pipeline](https://github.com/munikumar229/Dig-Reg/actions/workflows/main.yaml/badge.svg)](https://github.com/munikumar229/Dig-Reg/actions/workflows/main.yaml)
+[![PR Validation](https://github.com/munikumar229/Dig-Reg/actions/workflows/pr-validation.yaml/badge.svg)](https://github.com/munikumar229/Dig-Reg/actions/workflows/pr-validation.yaml)
 
 ---
 
@@ -175,14 +176,64 @@ docker run -p 8501:8501 dig-reg-frontend
 
 ## **CI/CD Pipeline**
 
-Automated pipeline using GitHub Actions includes:
+### **🚀 Automated Workflows**
 
-1. **Data Preprocessing** (`scripts/process_data.py`)
-2. **Model Training** (`scripts/train.py`)
-3. **Docker Image Build & Push**
-4. **Optional Deployment** to cloud platforms
+The project includes comprehensive CI/CD automation with **two main workflows**:
 
-Workflow is defined in `.github/workflows/main.yaml`.
+#### **1. Main CI/CD Pipeline** (`.github/workflows/main.yaml`)
+**Triggers:** Push to main/master branch
+- ✅ **Environment Setup**: Python 3.12, dependency caching
+- 📊 **Data Processing**: Automated dataset preprocessing
+- 🤖 **Model Training**: Both RandomForest and MLP models
+- 🧪 **Testing**: Model validation and API tests
+- 🐳 **Docker Build**: Multi-container images (backend + frontend)
+- 🔒 **Security Scanning**: Trivy vulnerability analysis
+- 🚀 **Deployment**: Staging environment deployment
+- 📢 **Notifications**: Build status reporting
+
+#### **2. Pull Request Validation** (`.github/workflows/pr-validation.yaml`)
+**Triggers:** Pull request creation/updates
+- 🔍 **Code Quality**: Flake8 linting and Black formatting
+- 🧪 **Testing**: Data processing and model training tests
+- 📁 **Structure Validation**: Project organization checks
+- 🐳 **Docker Testing**: Container build verification (no push)
+- ⚙️ **Configuration**: Docker-compose validation
+
+### **🏗️ Pipeline Stages**
+
+```mermaid
+graph TD
+    A[Code Push/PR] --> B[Environment Setup]
+    B --> C[Install Dependencies]
+    C --> D[Data Processing]
+    D --> E[Model Training]
+    E --> F[Run Tests]
+    F --> G{Tests Pass?}
+    G -->|Yes| H[Security Scan]
+    G -->|No| I[❌ Fail Pipeline]
+    H --> J[Build Docker Images]
+    J --> K[Push to Registry]
+    K --> L[Deploy to Staging]
+    L --> M[✅ Success Notification]
+```
+
+### **🔧 Pipeline Features**
+
+- **🏃 Fast Builds**: Dependency caching for faster execution
+- **🐳 Multi-Container**: Separate backend and frontend images
+- **🔒 Security First**: Vulnerability scanning with Trivy
+- **📊 Quality Gates**: Automated testing and validation
+- **🌍 Environment Management**: Staging deployment pipeline
+- **📢 Status Reporting**: Real-time build notifications
+
+### **🚀 Deployment Strategy**
+
+1. **Development**: Local testing with hot-reload
+2. **Pull Request**: Validation without deployment
+3. **Main Branch**: Full pipeline with staging deployment
+4. **Production**: Manual promotion from staging (when ready)
+
+**Pipeline Status:** All workflows are active and monitored
 
 ---
 

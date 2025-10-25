@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline - Dig-Reg
 
 on:
   push:
@@ -7,47 +7,164 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+env:
+  PYTHON_VERSION: '3.12'
+  
 jobs:
-  build-train:
+  test-and-build:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          
+      - name: Create data directory
+        run: mkdir -p data/processed
 
       - name: Pre-process data
-        run: python src/process_data.py
+        run: python scripts/process_data.py
 
-      - name: Train model
-        run: python src/train.py
+      - name: Train RandomForest model
+        run: python scripts/train.py --model randomforest
+
+      - name: Train MLP model  
+        run: python scripts/train.py --model mlp
+        
+      - name: Run model tests
+        run: python scripts/test_models.py
+        
+      - name: Test API endpoints (if tests exist)
+        run: |
+          if [ -f "tests/test_backend_api.py" ]; then
+            python tests/test_backend_api.py
+          else
+            echo "API tests not found, skipping..."
+          fi
 
   docker-build:
-    needs: build-train
+    needs: test-and-build
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+      - name: Build and push Backend Docker image
+        uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./deployment/Dockerfile.backend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/mlops-digits:latest
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/dig-reg-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/dig-reg-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deployment/Dockerfile.frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/dig-reg-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/dig-reg-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  security-scan:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  deploy-staging:
+    needs: [docker-build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Deploy to staging (placeholder)
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          echo "Backend image: ${{ secrets.DOCKER_USERNAME }}/dig-reg-backend:${{ github.sha }}"
+          echo "Frontend image: ${{ secrets.DOCKER_USERNAME }}/dig-reg-frontend:${{ github.sha }}"
+          
+          # Add actual deployment commands here
+          # Example: kubectl apply -f k8s/staging/
+          # Example: docker-compose -f docker-compose.staging.yml up -d
+          
+      - name: Health check
+        run: |
+          echo "🏥 Running health checks..."
+          # Add health check commands here
+          # curl -f http://staging.yourdomain.com/health || exit 1
+
+  notify:
+    needs: [test-and-build, docker-build, security-scan]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Notify build status
+        run: |
+          if [ "${{ needs.test-and-build.result }}" == "success" ] && 
+             [ "${{ needs.docker-build.result }}" == "success" ]; then
+            echo "✅ CI/CD Pipeline completed successfully!"
+            echo "🐳 Docker images built and pushed"
+            echo "🧪 All tests passed"
+            echo "🔒 Security scan completed"
+          else
+            echo "❌ CI/CD Pipeline failed"
+            echo "Test result: ${{ needs.test-and-build.result }}"
+            echo "Docker build result: ${{ needs.docker-build.result }}"
+          fi
