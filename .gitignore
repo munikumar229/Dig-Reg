@@ -34,3 +34,5 @@ Thumbs.db
 
 # Pytest cache
 .pytest_cache/
+README_QUICKSTART.md
+docs/

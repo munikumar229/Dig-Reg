@@ -4,6 +4,7 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-UI-orange)
 ![MLflow](https://img.shields.io/badge/MLflow-Tracking-green)
 ![Docker](https://img.shields.io/badge/Docker-Container-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
 ![GitHub Actions](https://img.shields.io/badge/CI/CD-GitHub--Actions-blue)
 
 ---
@@ -11,7 +12,7 @@
 ## **Overview**
 
 **Dig-Reg** is a full-stack machine learning project for **handwritten digits classification**.  
-It allows users to **draw digits (0–9) in the browser** and predict them in real-time using a trained **Random Forest model**.  
+It allows users to **draw digits (0–9) in the browser** and predict them in real-time using trained **Random Forest** and **MLP Neural Network** models.  
 
 Key technologies include:
 
@@ -32,7 +33,7 @@ Key technologies include:
 - 📈 Interactive prediction probabilities and performance metrics
 - 🔌 API endpoint to integrate with other applications
 - 🐳 Dockerized deployment for easy scaling and portability
-- 🚀 Automated CI/CD pipeline for preprocessing, training, Docker build, and deployment
+- � Automated CI/CD pipeline for preprocessing, training, Docker build, and deployment
 
 ---
 
@@ -42,20 +43,36 @@ Key technologies include:
 Dig-Reg/
 │
 ├── data/processed/                   # Preprocessed train/val/test CSVs
-├── src/
-│   ├── app.py                       # Streamlit frontend
-│   ├── main.py                      # FastAPI backend
-│   ├── train.py                     # Model training & MLflow logging
-│   └── process_data.py              # Dataset preprocessing
+├── backend/                         # FastAPI backend service
+│   ├── main.py                     # Backend entry point
+│   └── app/
+│       ├── main.py                 # FastAPI application factory
+│       ├── api/
+│       │   ├── endpoints.py        # API route handlers
+│       │   └── schemas.py          # Request/response models
+│       └── models/
+│           └── loader.py           # Model loading with fallbacks
+├── frontend/                        # Streamlit frontend UI
+│   ├── app.py                      # Main Streamlit application
+│   └── components/
+│       └── api_client.py           # API communication layer
+├── scripts/                         # Training & data processing
+│   ├── train.py                    # Model training & MLflow logging
+│   ├── process_data.py             # Dataset preprocessing
+│   ├── test_models.py              # Model validation
+│   └── train_all_models.sh         # Batch training script
+├── deployment/                      # Docker configuration
+│   ├── docker-compose.yml          # Multi-container orchestration
+│   ├── Dockerfile.backend          # Backend container config
+│   └── Dockerfile.frontend         # Frontend container config
 ├── models/                          # Trained model artifacts
 ├── mlruns/                          # MLflow experiment tracking data
+├── tests/                           # Test suites
+├── docs/                            # Comprehensive documentation
+├── config/                          # Configuration files
 ├── requirements.txt                 # Python dependencies
-├── Dockerfile                       # Docker image configuration
-├── .gitignore                       # Git ignore patterns
-└── .github/workflows/main.yaml      # CI/CD workflow
+└── .github/workflows/               # CI/CD workflows
 ```
-
----
 
 ## **Installation**
 
@@ -91,48 +108,68 @@ pip install -r requirements.txt
 
 1. **Preprocess the data:**
 ```bash
-python src/process_data.py
+python scripts/process_data.py
 ```
 
 2. **Train models and log to MLflow:**
 ```bash
 # Train RandomForest model
-python src/train.py --model randomforest
+python scripts/train.py --model randomforest
 
 # Train MLP (Neural Network) model
-python src/train.py --model mlp
+python scripts/train.py --model mlp
 
 # Or train both models at once
-./train_all_models.sh
+bash scripts/train_all_models.sh
 ```
 
 3. **Run FastAPI backend:**
 ```bash
-uvicorn src.main:app --host 0.0.0.0 --port 8502
+uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
 4. **Run Streamlit frontend (in another terminal):**
 ```bash
-streamlit run src/app.py
+streamlit run frontend/app.py --server.port 8501
 ```
 
 5. **Open your browser at:** `http://localhost:8501`
 
----
-
 ## **Docker Deployment**
 
-Build and run the Docker container:
+### **Using Docker Compose (Recommended)**
+
+Build and run all services with one command:
 
 ```bash
-# Build the Docker image
-docker build -t mlops-digits:latest .
+# Navigate to deployment directory
+cd deployment
 
-# Run the container
-docker run -p 8502:8502 mlops-digits:latest
+# Start all services
+sudo docker-compose up --build -d
+
+# Access the applications
+# Frontend: http://localhost:8501
+# Backend API: http://localhost:8000
+# API Documentation: http://localhost:8000/docs
+
+# Stop services
+sudo docker-compose down
 ```
 
-The app will be available at `http://localhost:8502`.
+### **Manual Docker Build**
+
+```bash
+# Build backend image
+docker build -f deployment/Dockerfile.backend -t dig-reg-backend .
+
+# Build frontend image
+docker build -f deployment/Dockerfile.frontend -t dig-reg-frontend .
+
+# Run containers
+docker run -p 8000:8000 dig-reg-backend
+docker run -p 8501:8501 dig-reg-frontend
+```
 
 ---
 
@@ -140,8 +177,8 @@ The app will be available at `http://localhost:8502`.
 
 Automated pipeline using GitHub Actions includes:
 
-1. **Data Preprocessing** (`process_data.py`)
-2. **Model Training** (`train.py`)
+1. **Data Preprocessing** (`scripts/process_data.py`)
+2. **Model Training** (`scripts/train.py`)
 3. **Docker Image Build & Push**
 4. **Optional Deployment** to cloud platforms
 
@@ -182,8 +219,8 @@ Visit `http://127.0.0.1:5000` to view:
 ## **API Documentation**
 
 Once the FastAPI backend is running, visit:
-- **Interactive API docs:** `http://localhost:8502/docs`
-- **Alternative docs:** `http://localhost:8502/redoc`
+- **Interactive API docs:** `http://localhost:8000/docs`
+- **Alternative docs:** `http://localhost:8000/redoc`
 
 ### Example API Usage:
 
@@ -191,19 +228,90 @@ Once the FastAPI backend is running, visit:
 import requests
 import numpy as np
 
-# Prepare your 28x28 digit image as a flattened array
-image_data = np.random.rand(784).tolist()  # Replace with actual image data
+# Prepare your 8x8 digit image as a flattened array (64 values)
+image_data = np.random.rand(64).tolist()  # Replace with actual image data
 
 response = requests.post(
-    "http://localhost:8502/predict",
-    json={"image": image_data}
+    "http://localhost:8000/predict",
+    json={
+        "pixels": image_data,
+        "model_type": "randomforest"  # or "mlp"
+    }
 )
 
 prediction = response.json()
-print(f"Predicted digit: {prediction['digit']}")
+print(f"Predicted digit: {prediction['predicted_digit']}")
+print(f"Confidence: {prediction['confidence']:.2f}")
 ```
 
 ---
+
+## **Architecture**
+
+```
+┌─────────────────┐   HTTP/REST   ┌──────────────────┐   MLflow   ┌─────────────────┐
+│   Streamlit     │ ────────────► │    FastAPI       │ ─────────► │   ML Models     │
+│   Frontend      │               │    Backend       │            │   & Registry    │
+│   (Port 8501)   │ ◄──────────── │   (Port 8000)    │ ◄───────── │                 │
+└─────────────────┘               └──────────────────┘            └─────────────────┘
+        │                                 │                               │
+        │                                 │                               │
+        ▼                                 ▼                               ▼
+┌─────────────────┐               ┌──────────────────┐            ┌─────────────────┐
+│   Canvas API    │               │  Model Loader    │            │  Pickle Files   │
+│   Drawing UI    │               │  Health Checks   │            │  Fallback Models│
+│   Predictions   │               │  Error Handling  │            │                 │
+└─────────────────┘               └──────────────────┘            └─────────────────┘
+```
+
+---
+
+## **Development**
+
+### **Running Tests**
+
+```bash
+# Test backend API (requires running backend)
+python tests/test_backend_api.py
+
+# Test models
+python tests/test_models.py
+
+# Run all tests
+python -m pytest tests/
+```
+
+### **Training New Models**
+
+```bash
+# Process data
+python scripts/process_data.py
+
+# Train specific model
+python scripts/train.py --model randomforest
+python scripts/train.py --model mlp
+
+# Train all models
+bash scripts/train_all_models.sh
+```
+
+### **Project Organization**
+
+- **Backend**: Modern FastAPI with automatic OpenAPI documentation
+- **Frontend**: Streamlit with component-based architecture  
+- **Scripts**: Separate training and utility scripts
+- **Tests**: Comprehensive API and model testing
+- **Deployment**: Multi-container Docker setup
+
+---
+
+## **Documentation**
+
+📚 **Complete Guides Available:**
+- [📋 Integration Guide](docs/INTEGRATION_GUIDE.md) - Complete setup and integration details
+- [🔧 Technical Architecture](docs/TECHNICAL_ARCHITECTURE_REPORT.md) - System architecture documentation  
+- [🚀 Quick Start](README_QUICKSTART.md) - Get running in 30 seconds
+- [📊 API Documentation](http://localhost:8000/docs) - Interactive API docs (when running)
 
 ## **Contributing**
 
@@ -223,8 +331,12 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## **Contact**
 
-**Author:** Muni Kumar  and Abhiroop
+**Author:** Muni Kumar and Abhiroop
 
-**GitHub:** [@munikumar229](https://github.com/munikumar229)   and [@shadowscythe03](https://github.com/shadowscythe03)
+**GitHub:** [@munikumar229](https://github.com/munikumar229) and [@shadowscythe03](https://github.com/shadowscythe03)
 
 **Project Link:** [https://github.com/munikumar229/Dig-Reg](https://github.com/munikumar229/Dig-Reg)
+
+---
+
+**Made with ❤️ for the Machine Learning Community** 🚀
