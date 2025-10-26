@@ -35,4 +35,5 @@ Thumbs.db
 # Pytest cache
 .pytest_cache/
 README_QUICKSTART.md
+SECURITY_FIX_COMMIT_MESSAGE.md
 docs/

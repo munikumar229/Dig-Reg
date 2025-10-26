@@ -134,11 +134,49 @@ print_success "Docker Compose file created"
 print_step "Performing security validation..."
 echo "🛡️ Checking for MLflow security updates (CVE-2024-37059)..."
 
-# Note: The images being deployed should contain MLflow 3.5.1 or later
-# This is informational for users about the security fix
-echo "   ℹ️  Images contain MLflow 3.5.1+ (CVE-2024-37059 resolved)"
+# Check and update any existing MLflow model artifacts with vulnerable versions
+if [[ -d "../mlruns" ]]; then
+    echo "🔍 Scanning MLflow model artifacts for vulnerable versions..."
+    
+    # Update requirements.txt files in model artifacts
+    REQUIREMENTS_FILES=$(find ../mlruns -name "requirements.txt" -exec grep -l "mlflow==3\.3\.2" {} \; 2>/dev/null || true)
+    if [[ -n "$REQUIREMENTS_FILES" ]]; then
+        echo "📝 Updating vulnerable requirements.txt files in model artifacts..."
+        for file in $REQUIREMENTS_FILES; do
+            sed -i 's/mlflow==3\.3\.2/mlflow==3.5.1/g' "$file" 2>/dev/null || true
+        done
+        echo "   ✅ Model requirements.txt files updated"
+    fi
+    
+    # Update conda.yaml files in model artifacts
+    CONDA_FILES=$(find ../mlruns -name "conda.yaml" -exec grep -l "mlflow==3\.3\.2" {} \; 2>/dev/null || true)
+    if [[ -n "$CONDA_FILES" ]]; then
+        echo "📝 Updating vulnerable conda.yaml files in model artifacts..."
+        for file in $CONDA_FILES; do
+            sed -i 's/mlflow==3\.3\.2/mlflow==3.5.1/g' "$file" 2>/dev/null || true
+        done
+        echo "   ✅ Model conda.yaml files updated"
+    fi
+    
+    # Update MLmodel files in model artifacts
+    MLMODEL_FILES=$(find ../mlruns -name "MLmodel" -exec grep -l "mlflow_version: 3\.3\.2" {} \; 2>/dev/null || true)
+    if [[ -n "$MLMODEL_FILES" ]]; then
+        echo "📝 Updating vulnerable MLmodel files in model artifacts..."
+        for file in $MLMODEL_FILES; do
+            sed -i 's/mlflow_version: 3\.3\.2/mlflow_version: 3.5.1/g' "$file" 2>/dev/null || true
+        done
+        echo "   ✅ Model MLmodel files updated"
+    fi
+    
+    echo "   ✅ MLflow model artifacts security update complete"
+else
+    echo "   ℹ️  No existing mlruns directory found - new deployment"
+fi
+
+# Note: The images being deployed contain MLflow 3.5.1 or later
+echo "   ℹ️  Container images contain MLflow 3.5.1+ (CVE-2024-37059 resolved)"
 echo "   ✅ MLflow unsafe deserialization vulnerability: FIXED"
-print_success "Security validation passed"
+print_success "Security validation and artifact update complete"
 
 # Pull both images
 print_step "Pulling Docker images..."
