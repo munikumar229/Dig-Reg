@@ -14,7 +14,7 @@
 
 **Dig-Reg** is a full-stack machine learning project for **handwritten digits classification**.  
 It allows users to **draw digits (0–9) in the browser** and predict them in real-time using trained **Random Forest** and **MLP Neural Network** models.  
-
+**Try it Here: [Live Demo](https://digreg.streamlit.app/)**  
 Key technologies include:
 
 - **Streamlit** for interactive frontend
